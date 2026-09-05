@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: dev
+      POSTGRES_DB: autodraw
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:6
+    ports:
+      - "6379:6379"
+
+  minio:
+    image: minio/minio
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    command: server /data
+    ports:
+      - "9000:9000"
+    volumes:
+      - minio_data:/data
+
+  backend:
+    build: ./backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./backend:/app
+      - ./storage:/storage
+    environment:
+      DATABASE_URL: postgresql://dev:dev@db:5432/autodraw
+      REDIS_URL: redis://redis:6379/0
+      STORAGE_PATH: /storage
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio123
+    depends_on:
+      - db
+      - redis
+      - minio
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build: ./frontend
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+    ports:
+      - "3000:80"
+
+  image_worker:
+    build: ./workers/image_worker
+    volumes:
+      - ./storage:/storage
+      - ./workers/image_worker:/worker
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      API_URL: http://backend:8000
+      STORAGE_PATH: /storage
+    depends_on:
+      - backend
+      - redis
+
+  audio_worker:
+    build: ./workers/audio_worker
+    volumes:
+      - ./storage:/storage
+      - ./workers/audio_worker:/worker
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      API_URL: http://backend:8000
+      STORAGE_PATH: /storage
+    depends_on:
+      - backend
+      - redis
+
+volumes:
+  db_data:
+  minio_data:
