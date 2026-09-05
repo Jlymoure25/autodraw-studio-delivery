@@ -1,0 +1,103 @@
+openapi: "3.0.3"
+info:
+  title: AutoDraw Studio API
+  version: "1.0.1"
+paths:
+  /projects:
+    post:
+      summary: Create a project
+      requestBody:
+        content:
+          application/json:
+            schema:
+              required: [title]
+              properties:
+                title:
+                  type: string
+      responses:
+        "201":
+          description: created
+  /projects/{projectId}/uploads:
+    post:
+      summary: Upload an image to project
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                file:
+                  type: string
+                  format: binary
+                filename:
+                  type: string
+      responses:
+        "200":
+          description: uploaded
+  /generate/photo:
+    post:
+      summary: Start photo Auto‑Draw generation (Auto‑Pro)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              required: [projectId, assetId, preset]
+              properties:
+                projectId: { type: string }
+                assetId: { type: string }
+                preset: { type: string, enum: [sketch,ink,painterly,watercolor,vector] }
+                params: { type: object }
+                rightsConfirmation: { type: string }
+      responses:
+        "202":
+          description: job accepted
+  /generate/audio:
+    post:
+      summary: Start deterministic audio render from MIDI/preset
+      requestBody:
+        content:
+          application/json:
+            schema:
+              required: [projectId, midiPath, preset]
+              properties:
+                projectId: { type: string }
+                midiPath: { type: string }
+                preset: { type: string }
+                soundfont: { type: string }
+      responses:
+        "202":
+          description: audio job queued
+  /drafts/{draftId}:
+    get:
+      summary: Get draft info and download links
+      parameters:
+        - name: draftId
+          in: path
+          required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  draftId: { type: string }
+                  status: { type: string }
+                  downloads: { type: object }
+  /audit/{auditId}:
+    get:
+      summary: Get audit record
+      parameters:
+        - name: auditId
+          in: path
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  auditId: { type: string }
+                  userConfirmation: { type: string }
+                  params: { type: object }

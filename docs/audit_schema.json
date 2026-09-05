@@ -1,0 +1,15 @@
+{
+  "$id": "https://example.com/audit.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AuditEntry",
+  "type": "object",
+  "required": ["draftId","timestamp","params","assetsUsed","noMlCertificate"],
+  "properties": {
+    "draftId": {"type":"integer"},
+    "timestamp": {"type":"string","format":"date-time"},
+    "params": {"type":"object"},
+    "assetsUsed": {"type":"array","items":{"type":"string"}},
+    "userConfirmation": {"type":"string"},
+    "noMlCertificate": {"type":"boolean"}
+  }
+}
